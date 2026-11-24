@@ -1,0 +1,770 @@
+\documentclass[11pt, a4paper]{article}
+
+\usepackage[a4paper, top=10mm, bottom=10mm, left=14mm, right=14mm]{geometry}
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{lmodern}
+\renewcommand{\familydefault}{\sfdefault}
+\else
+\usepackage{fontspec}
+\usepackage[english, bidi=basic, provide=*]{babel}
+\babelprovide[import, onchar=ids fonts]{english}
+\babelfont{rm}{Noto Sans}
+\fi
+\usepackage{xcolor}
+\usepackage{tikz}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+% =========================================================================
+% 1. CONFIGURATION PARAMETERS
+% =========================================================================
+\newif\ifshowbaubles      \showbaublestrue      % true = generate the 24 Christmas baubles
+\newif\ifshowgifts        \showgiftstrue        % true = generate the 24 gift boxes
+\newif\ifcolorversion     \colorversiontrue     % true = color version | false = coloring-book (B&W)
+\newif\ifshowcutguides    \showcutguidestrue    % true = show light dashed cutting guides
+
+% BACK-SIDE mode for double-sided printing (set value from 0 to 3):
+%   0 = Single-sided (no back pages generated)
+%   1 = Mirror front (prints the exact same graphic, number, and text on the back)
+%   2 = Decorative back (ornate bauble back or ribbon-wrapped gift box back)
+%   3 = Custom back text (uses \globalBackText or per-day \defineDayBack entries)
+\def\backmode{2}
+
+% =========================================================================
+% 2. FRONT TEXT CONTENT (24 DAYS)
+%    Edit the texts here: they automatically update on both baubles and gifts.
+% =========================================================================
+\newcommand{\defineDay}[2]{%
+	\expandafter\def\csname advent@text@#1\endcsname{#2}%
+}
+\newcommand{\dayText}[1]{%
+	\csname advent@text@#1\endcsname
+}
+
+\defineDay{1}{Santa's sleigh has 8 reindeer in pairs. If 3 pairs are wearing red bells, how many reindeer are NOT wearing bells?}
+\defineDay{2}{An elf wraps 4 gifts every 10 minutes. How many gifts can he wrap in half an hour?}
+\defineDay{3}{A snowman needs 3 buttons, 2 eyes, and 1 carrot nose. How many items do you need to decorate 5 snowmen?}
+\defineDay{4}{You bake 24 gingerbread cookies and share them equally among 6 friends. How many cookies does each friend get?}
+\defineDay{5}{A string of lights follows a pattern: red, green, gold, red, green, gold. What color is the 10th bulb?}
+\defineDay{6}{A pine tree is 120 cm tall. If you place a 15 cm star on top, how tall is the tree now?}
+\defineDay{7}{Five elves each have 3 candy canes. Together, they eat 4 of them. How many candy canes are left?}
+\defineDay{8}{Hot chocolate costs \$2 a cup and a cookie costs \$1. How much do 3 cups and 4 cookies cost?}
+\defineDay{9}{I am a 2-digit number. My tens digit is 2, and my ones digit is double my tens digit. What number am I?}
+\defineDay{10}{Santa starts checking his list at 8:15 PM and finishes at 9:00 PM. How many minutes did it take him?}
+\defineDay{11}{A box has 18 baubles: half are red, and the rest are silver. How many silver baubles are in the box?}
+\defineDay{12}{Three penguins go ice fishing and catch 7 fish each. How many fish do they catch altogether?}
+\defineDay{13}{A gift ribbon is 1 meter long. If you cut off 35 cm to tie a bow, how many centimeters are left?}
+\defineDay{14}{Four stockings hang by the fire. Each holds 5 chocolates and 2 oranges. How many items are there in total?}
+\defineDay{15}{If today is December 15th, how many days are left until Christmas Day on December 25th?}
+\defineDay{16}{A winter scarf has 6 blue stripes and twice as many white stripes. How many stripes does it have in total?}
+\defineDay{17}{Two elves build a wooden toy train in 6 hours. If they start at 10:00 AM, what time will they finish?}
+\defineDay{18}{Look at this number pattern: 2, 4, 8, 16, ... What is the next number in the sequence?}
+\defineDay{19}{A polar bear walks 4 km north, then turns around and walks 4 km south. How far is he from his starting point?}
+\defineDay{20}{You have 30 stickers to decorate 5 Christmas cards equally. How many stickers go on each card?}
+\defineDay{21}{An empty sleigh weighs 50 kg. With 8 bags of toys weighing 5 kg each, what is the total weight?}
+\defineDay{22}{Riddle: Which is heavier, 1 kilogram of snowflakes or 1 kilogram of holiday fruitcake?}
+\defineDay{23}{Four kids make 12 snowballs each for a friendly snowball fight. How many snowballs do they have in total?}
+\defineDay{24}{Tonight is Christmas Eve! Write down one kind thing you can do for someone else tomorrow.}
+
+% =========================================================================
+% 2B. BACK TEXT CONTENT (used when \backmode = 3)
+%     Set a single message for all days (\globalBackText) or override
+%     individual days with \defineDayBack{N}{...}.
+% =========================================================================
+\def\globalBackText{\textbf{Merry Christmas!}\\[4pt] Advent Calendar}
+
+\newcommand{\defineDayBack}[2]{%
+	\expandafter\def\csname advent@back@#1\endcsname{#2}%
+}
+\newcommand{\dayBackText}[1]{%
+	\ifcsname advent@back@#1\endcsname
+	\csname advent@back@#1\endcsname
+	\else
+	\globalBackText
+	\fi
+}
+
+% Optional per-day back text examples (uncomment to enable):
+% \defineDayBack{1}{\textbf{Day 1 Solution:}\\ 4 + 13 = 17 reindeer}
+% \defineDayBack{2}{\textbf{Day 2 Solution:}\\ 100 - 78 = 22 presents}
+
+% =========================================================================
+% 3. CHRISTMAS COLOR PALETTE
+% =========================================================================
+\definecolor{xmasRed}{HTML}{D62828}
+\definecolor{xmasRedLight}{HTML}{FFF6F4}
+\definecolor{xmasGreen}{HTML}{2A7B4F}
+\definecolor{xmasGreenLight}{HTML}{F3FAF6}
+\definecolor{xmasBlue}{HTML}{2563EB}
+\definecolor{xmasBlueLight}{HTML}{F2F7FF}
+\definecolor{xmasGold}{HTML}{EAB308}
+\definecolor{xmasAmber}{HTML}{D97706}
+\definecolor{xmasAmberLight}{HTML}{FFFBEB}
+\definecolor{xmasBurgundy}{HTML}{9B2226}
+\definecolor{xmasBurgundyLight}{HTML}{FDF4F4}
+\definecolor{xmasTeal}{HTML}{0E7490}
+\definecolor{xmasTealLight}{HTML}{F0FDFA}
+\definecolor{xmasCutGray}{HTML}{94A3B8}
+
+% Assign colors for a given day (automatically switches to B&W when \colorversionfalse)
+\newcommand{\setDayColors}[1]{%
+	\ifcolorversion
+	\pgfmathtruncatemacro{\cidx}{mod(#1-1,6)}%
+	\ifcase\cidx
+	\colorlet{colMain}{xmasRed}%
+	\colorlet{colAccent}{xmasGold}%
+	\colorlet{colBg}{xmasRedLight}%
+	\colorlet{colCap}{xmasGold}%
+	\colorlet{colBadge}{xmasGreen}%
+	\colorlet{colNum}{white}%
+	\or
+	\colorlet{colMain}{xmasGreen}%
+	\colorlet{colAccent}{xmasRed}%
+	\colorlet{colBg}{xmasGreenLight}%
+	\colorlet{colCap}{xmasGold}%
+	\colorlet{colBadge}{xmasRed}%
+	\colorlet{colNum}{white}%
+	\or
+	\colorlet{colMain}{xmasBlue}%
+	\colorlet{colAccent}{xmasGold}%
+	\colorlet{colBg}{xmasBlueLight}%
+	\colorlet{colCap}{xmasGold}%
+	\colorlet{colBadge}{xmasBlue}%
+	\colorlet{colNum}{white}%
+	\or
+	\colorlet{colMain}{xmasAmber}%
+	\colorlet{colAccent}{xmasBurgundy}%
+	\colorlet{colBg}{xmasAmberLight}%
+	\colorlet{colCap}{xmasBurgundy}%
+	\colorlet{colBadge}{xmasGreen}%
+	\colorlet{colNum}{white}%
+	\or
+	\colorlet{colMain}{xmasBurgundy}%
+	\colorlet{colAccent}{xmasGreen}%
+	\colorlet{colBg}{xmasBurgundyLight}%
+	\colorlet{colCap}{xmasGold}%
+	\colorlet{colBadge}{xmasGold}%
+	\colorlet{colNum}{black}%
+	\else
+	\colorlet{colMain}{xmasTeal}%
+	\colorlet{colAccent}{xmasRed}%
+	\colorlet{colBg}{xmasTealLight}%
+	\colorlet{colCap}{xmasGold}%
+	\colorlet{colBadge}{xmasRed}%
+	\colorlet{colNum}{white}%
+	\fi
+	\else
+	\colorlet{colMain}{white}%
+	\colorlet{colAccent}{white}%
+	\colorlet{colBg}{white}%
+	\colorlet{colCap}{white}%
+	\colorlet{colBadge}{white}%
+	\colorlet{colNum}{black}%
+	\fi
+}
+
+% =========================================================================
+% 4. VECTOR DECORATIVE ELEMENTS
+% =========================================================================
+\newcommand{\drawStar}[3]{% #1=x, #2=y, #3=radius
+	\begin{scope}[shift={(#1,#2)}]
+		\pgfmathsetmacro{\rin}{0.42*#3}%
+		\filldraw[fill=colAccent, draw=black, line width=0.65pt, line join=round]
+		(90:#3) -- (126:\rin) -- (162:#3) -- (198:\rin) -- (234:#3)
+		-- (270:\rin) -- (306:#3) -- (342:#3) -- (18:#3) -- (54:\rin) -- cycle;
+	\end{scope}
+}
+
+\newcommand{\drawSnowflake}[3]{% #1=x, #2=y, #3=radius
+	\begin{scope}[shift={(#1,#2)}]
+		\pgfmathsetmacro{\rbranch}{0.58*#3}%
+		\pgfmathsetmacro{\rsub}{0.30*#3}%
+		\foreach \ang in {0,60,120,180,240,300} {
+			\draw[black, line width=0.7pt, line cap=round] (0,0) -- (\ang:#3);
+			\pgfmathsetmacro{\aone}{\ang+42}%
+			\pgfmathsetmacro{\atwo}{\ang-42}%
+			\draw[black, line width=0.55pt, line cap=round] (\ang:\rbranch) -- ++(\aone:\rsub);
+			\draw[black, line width=0.55pt, line cap=round] (\ang:\rbranch) -- ++(\atwo:\rsub);
+		}
+		\filldraw[fill=colBg, draw=black, line width=0.5pt] (0,0) circle (0.045);
+	\end{scope}
+}
+
+\newcommand{\drawBow}[2]{% #1=center y, #2=scale
+	\begin{scope}[shift={(0,#1)}, scale=#2]
+		% Ribbon tails
+		\filldraw[fill=colAccent, draw=black, line width=1.15pt, line join=round]
+		(-0.14,-0.04) -- (-0.92,-0.92) -- (-0.50,-0.80) -- (-0.36,-1.05) -- (0,-0.14) -- cycle;
+		\filldraw[fill=colAccent, draw=black, line width=1.15pt, line join=round]
+		(0.14,-0.04) -- (0.92,-0.92) -- (0.50,-0.80) -- (0.36,-1.05) -- (0,-0.14) -- cycle;
+		% Left loop
+		\filldraw[fill=colAccent, draw=black, line width=1.25pt, line join=round]
+		(0,0) .. controls (-0.58,0.76) and (-1.55,0.68) .. (-1.45,0.06)
+		.. controls (-1.35,-0.46) and (-0.55,-0.34) .. (0,0) -- cycle;
+		\draw[black, line width=0.8pt, line cap=round]
+		(-0.24,0.06) .. controls (-0.64,0.18) and (-0.94,0.12) .. (-1.08,0.02);
+		% Right loop
+		\filldraw[fill=colAccent, draw=black, line width=1.25pt, line join=round]
+		(0,0) .. controls (0.58,0.76) and (1.55,0.68) .. (1.45,0.06)
+		.. controls (1.35,-0.46) and (0.55,-0.34) .. (0,0) -- cycle;
+		\draw[black, line width=0.8pt, line cap=round]
+		(0.24,0.06) .. controls (0.64,0.18) and (0.94,0.12) .. (1.08,0.02);
+		% Center knot
+		\filldraw[fill=colAccent, draw=black, line width=1.25pt, rounded corners=2.5pt]
+		(-0.24,-0.22) rectangle (0.24,0.22);
+	\end{scope}
+}
+
+\newcommand{\drawCutGuide}{%
+	\ifshowcutguides
+	\draw[xmasCutGray, dashed, line width=0.5pt, rounded corners=2pt]
+	(-4.22,-4.22) rectangle (4.22,4.22);
+	\fi
+}
+
+% =========================================================================
+% 5. GRAPHIC A: CHRISTMAS BAUBLE (FRONT, DECORATIVE BACK, CUSTOM TEXT BACK)
+% =========================================================================
+\newcommand{\drawBauble}[1]{%
+	\begin{tikzpicture}[x=1cm, y=1cm]
+		\useasboundingbox (-4.30,-4.30) rectangle (4.30,4.30);
+		\setDayColors{#1}
+		\drawCutGuide
+		
+		% Top hanging ring
+		\filldraw[fill=colCap, draw=black, line width=1.3pt] (0,3.68) circle (0.34);
+		\filldraw[fill=white, draw=black, line width=1.1pt] (0,3.68) circle (0.16);
+		
+		% Ornament cap
+		\filldraw[fill=colCap, draw=black, line width=1.35pt, rounded corners=2.5pt]
+		(-0.62,2.78) rectangle (0.62,3.40);
+		\draw[black, line width=0.8pt] (-0.24,2.84) -- (-0.24,3.34);
+		\draw[black, line width=0.8pt] (0.24,2.84) -- (0.24,3.34);
+		
+		% Outer bauble body
+		\filldraw[fill=colMain, draw=black, line width=1.6pt] (0,-0.55) circle (3.45);
+		
+		% Dotted decorative rim
+		\foreach \ang in {0,15,...,345} {
+			\filldraw[fill=colBg, draw=black, line width=0.45pt]
+			([shift={(0,-0.55)}]\ang:3.25) circle (0.065);
+		}
+		
+		% Light inner circle for high text readability
+		\filldraw[fill=colBg, draw=black, line width=1.15pt] (0,-0.55) circle (3.04);
+		
+		% Bow below the cap
+		\drawBow{2.84}{0.62}
+		
+		% Day number medallion
+		\filldraw[fill=colBadge, draw=black, line width=1.3pt] (0,1.82) circle (0.48);
+		\node[text=colNum, font=\fontsize{15}{15}\selectfont\bfseries] at (0,1.82) {#1};
+		
+		% Side ornaments next to the number
+		\ifodd#1
+		\drawStar{-0.96}{1.86}{0.22}
+		\drawStar{0.96}{1.86}{0.22}
+		\else
+		\drawSnowflake{-0.96}{1.86}{0.22}
+		\drawSnowflake{0.96}{1.86}{0.22}
+		\fi
+		
+		% Problem / riddle text
+		\node[
+		anchor=center,
+		align=center,
+		text width=5.15cm,
+		text=black,
+		font=\fontsize{9.5}{12}\selectfont
+		] at (0,-0.65) {\dayText{#1}};
+		
+		% Bottom ornaments
+		\ifodd#1
+		\drawStar{-0.95}{-3.02}{0.21}
+		\drawSnowflake{0}{-3.14}{0.23}
+		\drawStar{0.95}{-3.02}{0.21}
+		\else
+		\drawSnowflake{-0.95}{-3.02}{0.21}
+		\drawStar{0}{-3.14}{0.23}
+		\drawSnowflake{0.95}{-3.02}{0.21}
+		\fi
+	\end{tikzpicture}%
+}
+
+% Decorative back of the bauble (identical outer silhouette for clean cutting)
+\newcommand{\drawBaubleBack}[1]{%
+	\begin{tikzpicture}[x=1cm, y=1cm]
+		\useasboundingbox (-4.30,-4.30) rectangle (4.30,4.30);
+		\setDayColors{#1}
+		\drawCutGuide
+		
+		% Top hanging ring
+		\filldraw[fill=colCap, draw=black, line width=1.3pt] (0,3.68) circle (0.34);
+		\filldraw[fill=white, draw=black, line width=1.1pt] (0,3.68) circle (0.16);
+		
+		% Ornament cap
+		\filldraw[fill=colCap, draw=black, line width=1.35pt, rounded corners=2.5pt]
+		(-0.62,2.78) rectangle (0.62,3.40);
+		\draw[black, line width=0.8pt] (-0.24,2.84) -- (-0.24,3.34);
+		\draw[black, line width=0.8pt] (0.24,2.84) -- (0.24,3.34);
+		
+		% Outer bauble body
+		\filldraw[fill=colMain, draw=black, line width=1.6pt] (0,-0.55) circle (3.45);
+		
+		% Inner decorative pattern clipped to the sphere
+		\begin{scope}
+			\clip (0,-0.55) circle (3.45);
+			
+			% Subtle diagonal stripes
+			\foreach \x in {-6.5,-5.7,...,6.5} {
+				\draw[black, opacity=0.20, line width=1.1pt] (\x,-4.2) -- ++(2.8,7.4);
+			}
+			
+			% Central ornamental band
+			\filldraw[fill=colBg, draw=black, line width=1.15pt]
+			(-3.60,-1.48) rectangle (3.60,0.38);
+			\filldraw[fill=colAccent, draw=black, line width=1.05pt]
+			(-3.60,-1.18) rectangle (3.60,0.08);
+			
+			% Dots along the band borders
+			\foreach \x in {-3.0,-2.4,...,3.0} {
+				\filldraw[fill=colMain, draw=black, line width=0.45pt] (\x,0.23) circle (0.06);
+				\filldraw[fill=colMain, draw=black, line width=0.45pt] (\x,-1.33) circle (0.06);
+			}
+			
+			% Upper and lower sphere ornaments
+			\ifodd#1
+			\drawSnowflake{-1.35}{1.48}{0.32}
+			\drawStar{0}{1.48}{0.34}
+			\drawSnowflake{1.35}{1.48}{0.32}
+			\drawSnowflake{-1.35}{-2.58}{0.32}
+			\drawStar{0}{-2.58}{0.34}
+			\drawSnowflake{1.35}{-2.58}{0.32}
+			\else
+			\drawStar{-1.35}{1.48}{0.32}
+			\drawSnowflake{0}{1.48}{0.34}
+			\drawStar{1.35}{1.48}{0.32}
+			\drawStar{-1.35}{-2.58}{0.32}
+			\drawSnowflake{0}{-2.58}{0.34}
+			\drawStar{1.35}{-2.58}{0.32}
+			\fi
+			
+			% Side stars inside the band
+			\drawStar{-2.15}{-0.55}{0.32}
+			\drawStar{2.15}{-0.55}{0.32}
+			
+			% Central rosette
+			\filldraw[fill=colBg, draw=black, line width=1.25pt] (0,-0.55) circle (0.92);
+			\filldraw[fill=colBadge, draw=black, line width=0.95pt] (0,-0.55) circle (0.72);
+			\ifodd#1
+			\drawStar{0}{-0.55}{0.48}
+			\else
+			\filldraw[fill=colBg, draw=black, line width=0.8pt] (0,-0.55) circle (0.58);
+			\drawSnowflake{0}{-0.55}{0.44}
+			\fi
+		\end{scope}
+		
+		% Crisp outer outline
+		\draw[black, line width=1.6pt] (0,-0.55) circle (3.45);
+		
+		% Top bow (matches front silhouette)
+		\drawBow{2.84}{0.62}
+	\end{tikzpicture}%
+}
+
+% Bauble back with custom text
+\newcommand{\drawBaubleBackText}[1]{%
+	\begin{tikzpicture}[x=1cm, y=1cm]
+		\useasboundingbox (-4.30,-4.30) rectangle (4.30,4.30);
+		\setDayColors{#1}
+		\drawCutGuide
+		
+		% Top hanging ring
+		\filldraw[fill=colCap, draw=black, line width=1.3pt] (0,3.68) circle (0.34);
+		\filldraw[fill=white, draw=black, line width=1.1pt] (0,3.68) circle (0.16);
+		
+		% Ornament cap
+		\filldraw[fill=colCap, draw=black, line width=1.35pt, rounded corners=2.5pt]
+		(-0.62,2.78) rectangle (0.62,3.40);
+		\draw[black, line width=0.8pt] (-0.24,2.84) -- (-0.24,3.34);
+		\draw[black, line width=0.8pt] (0.24,2.84) -- (0.24,3.34);
+		
+		% Outer bauble body
+		\filldraw[fill=colMain, draw=black, line width=1.6pt] (0,-0.55) circle (3.45);
+		
+		% Dotted decorative rim
+		\foreach \ang in {0,15,...,345} {
+			\filldraw[fill=colBg, draw=black, line width=0.45pt]
+			([shift={(0,-0.55)}]\ang:3.25) circle (0.065);
+		}
+		
+		% Light inner circle for custom text
+		\filldraw[fill=colBg, draw=black, line width=1.15pt] (0,-0.55) circle (3.04);
+		
+		% Top bow
+		\drawBow{2.84}{0.62}
+		
+		% Top ornaments
+		\ifodd#1
+		\drawStar{-0.85}{1.82}{0.21}
+		\drawSnowflake{0}{1.92}{0.24}
+		\drawStar{0.85}{1.82}{0.21}
+		\else
+		\drawSnowflake{-0.85}{1.82}{0.21}
+		\drawStar{0}{1.92}{0.24}
+		\drawSnowflake{0.85}{1.82}{0.21}
+		\fi
+		
+		% Custom back text
+		\node[
+		anchor=center,
+		align=center,
+		text width=5.15cm,
+		text=black,
+		font=\fontsize{10}{13}\selectfont
+		] at (0,-0.55) {\dayBackText{#1}};
+		
+		% Bottom ornaments
+		\ifodd#1
+		\drawStar{-0.95}{-3.02}{0.21}
+		\drawSnowflake{0}{-3.14}{0.23}
+		\drawStar{0.95}{-3.02}{0.21}
+		\else
+		\drawSnowflake{-0.95}{-3.02}{0.21}
+		\drawStar{0}{-3.14}{0.23}
+		\drawSnowflake{0.95}{-3.02}{0.21}
+		\fi
+	\end{tikzpicture}%
+}
+
+% =========================================================================
+% 6. GRAPHIC B: GIFT BOX (FRONT, DECORATIVE BACK, CUSTOM TEXT BACK)
+% =========================================================================
+\newcommand{\drawGift}[1]{%
+	\begin{tikzpicture}[x=1cm, y=1cm]
+		\useasboundingbox (-4.30,-4.30) rectangle (4.30,4.30);
+		\setDayColors{#1}
+		\drawCutGuide
+		
+		% Large bow on top of the lid
+		\drawBow{3.08}{0.92}
+		
+		% Gift box body
+		\filldraw[fill=colMain, draw=black, line width=1.6pt, rounded corners=4pt]
+		(-3.55,-3.95) rectangle (3.55,1.88);
+		
+		% Diagonal stripe pattern on the box body
+		\begin{scope}
+			\clip[rounded corners=4pt] (-3.55,-3.95) rectangle (3.55,1.88);
+			\foreach \x in {-6.5,-5.7,...,6.5} {
+				\draw[black, opacity=0.22, line width=1.2pt] (\x,-4.1) -- ++(2.6,6.2);
+			}
+		\end{scope}
+		\draw[black, line width=1.6pt, rounded corners=4pt]
+		(-3.55,-3.95) rectangle (3.55,1.88);
+		
+		% Gift box lid
+		\filldraw[fill=colMain, draw=black, line width=1.6pt, rounded corners=3pt]
+		(-3.80,1.88) rectangle (3.80,2.80);
+		
+		% Diagonal stripe pattern on the lid
+		\begin{scope}
+			\clip[rounded corners=3pt] (-3.80,1.88) rectangle (3.80,2.80);
+			\foreach \x in {-4.4,-3.8,...,4.4} {
+				\draw[black, opacity=0.28, line width=1.1pt] (\x,1.82) -- ++(0.75,1.05);
+			}
+		\end{scope}
+		\draw[black, line width=1.6pt, rounded corners=3pt]
+		(-3.80,1.88) rectangle (3.80,2.80);
+		
+		% Center ribbon band on the lid (holds the day number)
+		\filldraw[fill=colBadge, draw=black, line width=1.35pt]
+		(-0.62,1.88) rectangle (0.62,2.80);
+		\node[text=colNum, font=\fontsize{15}{15}\selectfont\bfseries] at (0,2.34) {#1};
+		
+		% Lid ornaments next to the number
+		\ifodd#1
+		\drawStar{-2.35}{2.34}{0.22}
+		\drawStar{2.35}{2.34}{0.22}
+		\else
+		\drawSnowflake{-2.35}{2.34}{0.22}
+		\drawSnowflake{2.35}{2.34}{0.22}
+		\fi
+		
+		% Light inner label for the text
+		\filldraw[fill=colBg, draw=black, line width=1.2pt, rounded corners=6pt]
+		(-3.02,-3.48) rectangle (3.02,1.42);
+		
+		% Problem / riddle text
+		\node[
+		anchor=center,
+		align=center,
+		text width=5.35cm,
+		text=black,
+		font=\fontsize{9.5}{12}\selectfont
+		] at (0,-0.78) {\dayText{#1}};
+		
+		% Bottom label ornaments
+		\ifodd#1
+		\drawStar{-1.25}{-3.02}{0.20}
+		\drawSnowflake{0}{-3.02}{0.22}
+		\drawStar{1.25}{-3.02}{0.20}
+		\else
+		\drawSnowflake{-1.25}{-3.02}{0.20}
+		\drawStar{0}{-3.02}{0.22}
+		\drawSnowflake{1.25}{-3.02}{0.20}
+		\fi
+	\end{tikzpicture}%
+}
+
+% Decorative back of the gift box (identical outer silhouette, wrapped with crossed ribbons)
+\newcommand{\drawGiftBack}[1]{%
+	\begin{tikzpicture}[x=1cm, y=1cm]
+		\useasboundingbox (-4.30,-4.30) rectangle (4.30,4.30);
+		\setDayColors{#1}
+		\drawCutGuide
+		
+		% Large bow on top of the lid
+		\drawBow{3.08}{0.92}
+		
+		% Gift box body
+		\filldraw[fill=colMain, draw=black, line width=1.6pt, rounded corners=4pt]
+		(-3.55,-3.95) rectangle (3.55,1.88);
+		
+		% Wrapping paper pattern and crossed ribbons
+		\begin{scope}
+			\clip[rounded corners=4pt] (-3.55,-3.95) rectangle (3.55,1.88);
+			\foreach \x in {-6.5,-5.7,...,6.5} {
+				\draw[black, opacity=0.22, line width=1.2pt] (\x,-4.1) -- ++(2.6,6.2);
+			}
+			
+			% Horizontal ribbon
+			\filldraw[fill=colAccent, draw=black, line width=1.3pt]
+			(-3.65,-1.52) rectangle (3.65,-0.52);
+			\draw[black, dashed, line width=0.55pt] (-3.55,-1.38) -- (3.55,-1.38);
+			\draw[black, dashed, line width=0.55pt] (-3.55,-0.66) -- (3.55,-0.66);
+			
+			% Vertical ribbon
+			\filldraw[fill=colBadge, draw=black, line width=1.3pt]
+			(-0.56,-4.05) rectangle (0.56,1.95);
+			\draw[black, dashed, line width=0.55pt] (-0.42,-3.95) -- (-0.42,1.88);
+			\draw[black, dashed, line width=0.55pt] (0.42,-3.95) -- (0.42,1.88);
+		\end{scope}
+		
+		% Crisp outer outline of the box body
+		\draw[black, line width=1.6pt, rounded corners=4pt]
+		(-3.55,-3.95) rectangle (3.55,1.88);
+		
+		% Ornaments in the 4 wrapping-paper quadrants
+		\ifodd#1
+		\drawStar{-2.05}{0.68}{0.30}
+		\drawStar{2.05}{0.68}{0.30}
+		\drawSnowflake{-2.05}{-2.72}{0.30}
+		\drawSnowflake{2.05}{-2.72}{0.30}
+		\else
+		\drawSnowflake{-2.05}{0.68}{0.30}
+		\drawSnowflake{2.05}{0.68}{0.30}
+		\drawStar{-2.05}{-2.72}{0.30}
+		\drawStar{2.05}{-2.72}{0.30}
+		\fi
+		
+		% Decorative seal at the ribbon intersection
+		\filldraw[fill=colBg, draw=black, line width=1.2pt] (0,-1.02) circle (0.64);
+		\ifodd#1
+		\drawStar{0}{-1.02}{0.40}
+		\else
+		\drawSnowflake{0}{-1.02}{0.40}
+		\fi
+		
+		% Gift box lid
+		\filldraw[fill=colMain, draw=black, line width=1.6pt, rounded corners=3pt]
+		(-3.80,1.88) rectangle (3.80,2.80);
+		
+		% Striped wrapping paper on the lid
+		\begin{scope}
+			\clip[rounded corners=3pt] (-3.80,1.88) rectangle (3.80,2.80);
+			\foreach \x in {-4.4,-3.8,...,4.4} {
+				\draw[black, opacity=0.28, line width=1.1pt] (\x,1.82) -- ++(0.75,1.05);
+			}
+		\end{scope}
+		\draw[black, line width=1.6pt, rounded corners=3pt]
+		(-3.80,1.88) rectangle (3.80,2.80);
+		
+		% Vertical ribbon continuation on the lid
+		\filldraw[fill=colBadge, draw=black, line width=1.35pt]
+		(-0.56,1.88) rectangle (0.56,2.80);
+		\draw[black, dashed, line width=0.55pt] (-0.42,1.92) -- (-0.42,2.76);
+		\draw[black, dashed, line width=0.55pt] (0.42,1.92) -- (0.42,2.76);
+		
+		% Lid ornaments
+		\ifodd#1
+		\drawStar{-2.35}{2.34}{0.22}
+		\drawStar{2.35}{2.34}{0.22}
+		\else
+		\drawSnowflake{-2.35}{2.34}{0.22}
+		\drawSnowflake{2.35}{2.34}{0.22}
+		\fi
+	\end{tikzpicture}%
+}
+
+% Gift box back with custom text
+\newcommand{\drawGiftBackText}[1]{%
+	\begin{tikzpicture}[x=1cm, y=1cm]
+		\useasboundingbox (-4.30,-4.30) rectangle (4.30,4.30);
+		\setDayColors{#1}
+		\drawCutGuide
+		
+		% Large bow on top of the lid
+		\drawBow{3.08}{0.92}
+		
+		% Gift box body
+		\filldraw[fill=colMain, draw=black, line width=1.6pt, rounded corners=4pt]
+		(-3.55,-3.95) rectangle (3.55,1.88);
+		
+		% Diagonal stripe pattern on the body
+		\begin{scope}
+			\clip[rounded corners=4pt] (-3.55,-3.95) rectangle (3.55,1.88);
+			\foreach \x in {-6.5,-5.7,...,6.5} {
+				\draw[black, opacity=0.22, line width=1.2pt] (\x,-4.1) -- ++(2.6,6.2);
+			}
+		\end{scope}
+		\draw[black, line width=1.6pt, rounded corners=4pt]
+		(-3.55,-3.95) rectangle (3.55,1.88);
+		
+		% Gift box lid
+		\filldraw[fill=colMain, draw=black, line width=1.6pt, rounded corners=3pt]
+		(-3.80,1.88) rectangle (3.80,2.80);
+		
+		% Diagonal stripe pattern on the lid
+		\begin{scope}
+			\clip[rounded corners=3pt] (-3.80,1.88) rectangle (3.80,2.80);
+			\foreach \x in {-4.4,-3.8,...,4.4} {
+				\draw[black, opacity=0.28, line width=1.1pt] (\x,1.82) -- ++(0.75,1.05);
+			}
+		\end{scope}
+		\draw[black, line width=1.6pt, rounded corners=3pt]
+		(-3.80,1.88) rectangle (3.80,2.80);
+		
+		% Center ribbon band on the lid with decorative emblem
+		\filldraw[fill=colBadge, draw=black, line width=1.35pt]
+		(-0.62,1.88) rectangle (0.62,2.80);
+		\ifodd#1
+		\drawStar{0}{2.34}{0.26}
+		\else
+		\filldraw[fill=colBg, draw=black, line width=0.7pt] (0,2.34) circle (0.30);
+		\drawSnowflake{0}{2.34}{0.22}
+		\fi
+		
+		% Lid ornaments
+		\ifodd#1
+		\drawStar{-2.35}{2.34}{0.22}
+		\drawStar{2.35}{2.34}{0.22}
+		\else
+		\drawSnowflake{-2.35}{2.34}{0.22}
+		\drawSnowflake{2.35}{2.34}{0.22}
+		\fi
+		
+		% Light inner label for custom text
+		\filldraw[fill=colBg, draw=black, line width=1.2pt, rounded corners=6pt]
+		(-3.02,-3.48) rectangle (3.02,1.42);
+		
+		% Top label ornaments
+		\ifodd#1
+		\drawStar{-1.25}{0.96}{0.20}
+		\drawSnowflake{0}{0.96}{0.22}
+		\drawStar{1.25}{0.96}{0.20}
+		\else
+		\drawSnowflake{-1.25}{0.96}{0.20}
+		\drawStar{0}{0.96}{0.22}
+		\drawSnowflake{1.25}{0.96}{0.20}
+		\fi
+		
+		% Custom back text
+		\node[
+		anchor=center,
+		align=center,
+		text width=5.35cm,
+		text=black,
+		font=\fontsize{10}{13}\selectfont
+		] at (0,-1.02) {\dayBackText{#1}};
+		
+		% Bottom label ornaments
+		\ifodd#1
+		\drawStar{-1.25}{-3.02}{0.20}
+		\drawSnowflake{0}{-3.02}{0.22}
+		\drawStar{1.25}{-3.02}{0.20}
+		\else
+		\drawSnowflake{-1.25}{-3.02}{0.20}
+		\drawStar{0}{-3.02}{0.22}
+		\drawSnowflake{1.25}{-3.02}{0.20}
+		\fi
+	\end{tikzpicture}%
+}
+
+% =========================================================================
+% 7. 2x3 A4 GRID LAYOUT (ALIGNED FRONT + BACK FOR DUPLEX PRINTING)
+% =========================================================================
+\newcommand{\gridPage}[7]{%
+	\clearpage
+	\vspace*{\fill}%
+	{\centering
+		#1{#2}\hspace{6mm}#1{#3}\par\nointerlineskip\vspace{4mm}%
+		#1{#4}\hspace{6mm}#1{#5}\par\nointerlineskip\vspace{4mm}%
+		#1{#6}\hspace{6mm}#1{#7}\par
+	}%
+	\vfill
+}
+
+% Generates a front page + (if enabled) the matching back page with
+% swapped columns (left <-> right) for long-edge duplex printing.
+\newcommand{\baublePage}[6]{%
+	\gridPage{\drawBauble}{#1}{#2}{#3}{#4}{#5}{#6}%
+	\ifcase\backmode
+	% 0: single-sided
+	\or
+	\gridPage{\drawBauble}{#2}{#1}{#4}{#3}{#6}{#5}%
+	\or
+	\gridPage{\drawBaubleBack}{#2}{#1}{#4}{#3}{#6}{#5}%
+	\or
+	\gridPage{\drawBaubleBackText}{#2}{#1}{#4}{#3}{#6}{#5}%
+	\fi
+}
+
+\newcommand{\giftPage}[6]{%
+	\gridPage{\drawGift}{#1}{#2}{#3}{#4}{#5}{#6}%
+	\ifcase\backmode
+	% 0: single-sided
+	\or
+	\gridPage{\drawGift}{#2}{#1}{#4}{#3}{#6}{#5}%
+	\or
+	\gridPage{\drawGiftBack}{#2}{#1}{#4}{#3}{#6}{#5}%
+	\or
+	\gridPage{\drawGiftBackText}{#2}{#1}{#4}{#3}{#6}{#5}%
+	\fi
+}
+
+% =========================================================================
+% 8. DOCUMENT GENERATION
+% =========================================================================
+\begin{document}
+	
+	\ifshowbaubles
+	\baublePage{1}{2}{3}{4}{5}{6}
+	\baublePage{7}{8}{9}{10}{11}{12}
+	\baublePage{13}{14}{15}{16}{17}{18}
+	\baublePage{19}{20}{21}{22}{23}{24}
+	\fi
+	
+	\ifshowgifts
+	\giftPage{1}{2}{3}{4}{5}{6}
+	\giftPage{7}{8}{9}{10}{11}{12}
+	\giftPage{13}{14}{15}{16}{17}{18}
+	\giftPage{19}{20}{21}{22}{23}{24}
+	\fi
+	
+\end{document}
